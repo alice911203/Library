@@ -40,5 +40,20 @@ namespace booksystem.api.Controllers
             var ids = await _categoryService.BatchCreateCategoriesAsync(dtos);
             return Ok(new { Message = $"成功新增 {ids.Count} 個類別", Ids = ids });
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDto dto)
+        {
+            var UpdateCategory = await _categoryService.UpdateCategoryAsync(id, dto);
+            if (UpdateCategory == false) return NotFound("找不到要更新的類別");
+            return NoContent();
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+           
+                var DeleteCategory = await _categoryService.DeleteCategoryAsync(id);
+                if (!DeleteCategory) return NotFound("找不到要刪除的類別");
+                return NoContent();
+            }
     }
 }

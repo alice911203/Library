@@ -52,8 +52,11 @@ namespace booksystem.api.Service
         }
         public async Task<BookResponseDto?> GetBookByIdAsync(int id)
         {
-            var book = await _context.Books.FirstOrDefaultAsync(b=> b.Id==id);
-            if (book  == null) { return null; }
+            var book = await _context.Books
+                .Include(b => b.Author)
+                .Include(b => b.Category)
+                .FirstOrDefaultAsync(b=> b.Id==id);
+            if (book  == null) return null; 
             return new BookResponseDto
             {
                 Id = book.Id,
@@ -61,6 +64,8 @@ namespace booksystem.api.Service
                 ISBN = book.ISBN,
                 Price = book.Price,
                 PublishDate = book.PublishDate,
+                AuthorName = book.Author!.Name,
+                CategoryName = book.Category != null ? book.Category.Name : "沒有分類"
             };
         }
 
@@ -74,21 +79,31 @@ namespace booksystem.api.Service
                 ISBN = d.ISBN,
                 Price = d.Price,
                 PublishDate = d.PublishDate,
+                CategoryId = d.CategoryId,
+                AuthorId = d.AuthorId,  
             }).ToList();
         _context.AddRange(newbooks);
         await _context.SaveChangesAsync();
-        var responses = newbooks.Select(b => new BookResponseDto
-        {
-            Id= b.Id,
-            Name = b.Name,
-            ISBN = b.ISBN,
-            Price = b.Price,
-            PublishDate = b.PublishDate,
-        }).ToArray();
-        return responses;
+            var newIds = newbooks.Select(b => b.Id).ToList();
+            return await _context.Books
+                .Include(b => b.Author)
+                .Include(b => b.Category)
+                .Where(b => newIds.Contains(b.Id))
+                .Select(b => new BookResponseDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    ISBN = b.ISBN,
+                    Price = b.Price,
+                    PublishDate = b.PublishDate,
+                    AuthorName = b.Author!.Name,
+                    CategoryName = b.Category != null ? b.Category.Name : "沒有分類"
+                }).ToListAsync();
         }
+        
         public async Task<BookResponseDto> CreateBookAsync (CreateBookDto dto)
         {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
             // 1. 在真正寫入書籍之前，先去資料庫查查看這個作者 ID 到底存不存在？
             var authorExists = await _context.Authors.AnyAsync(a => a.Id == dto.AuthorId);
 
@@ -98,7 +113,7 @@ namespace booksystem.api.Service
                 throw new ArgumentException("新增失敗：找不到該作者");
             }
             ;
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+           
             var newbook =  new Book
             {
                 Name = dto.Name,
@@ -137,6 +152,8 @@ namespace booksystem.api.Service
             existingBook.ISBN = dto.ISBN;
             existingBook.Price= dto.Price;
             existingBook.PublishDate = dto.PublishDate;
+            existingBook.AuthorId = dto.AuthorId;
+            existingBook.CategoryId = dto.CategoryId;
 
             await _context.SaveChangesAsync();
             return true;

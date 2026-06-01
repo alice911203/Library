@@ -47,5 +47,19 @@ namespace booksystem.api.Service
             // 回傳所有成功建立的 ID 陣列
             return Categories.Select(a => a.Id).ToList();
         }
+        public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDto dto)
+        {
+            var Category =await  _context.Categories.FindAsync(id);
+            if (Category == null) return false;
+            Category.Name = dto.Name;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> DeleteCategoryAsync(int id)
+        {
+            var affectedRows = await _context.Categories.Where(c => c.Id==id).ExecuteDeleteAsync(); 
+            
+            return affectedRows>0;
+        }
     }
 }

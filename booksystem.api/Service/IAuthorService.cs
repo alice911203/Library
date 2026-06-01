@@ -8,5 +8,7 @@ namespace booksystem.api.Service
         Task<IEnumerable<object>> GetAuthorsAsync();
         Task<int> CreateAuthorAsync(AuthorCreateDto dto);
         Task<List<int>> BatchCreateAuthorsAsync(IEnumerable<AuthorCreateDto> dtos); // 多筆新增
+        Task<bool> UpdateAuthorAsync(int id, AuthorUpdateDto dto);
+        Task<bool> DeleteAuthorAsync(int id);
     }
 }

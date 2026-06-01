@@ -49,5 +49,28 @@ namespace booksystem.api.Service
             // 回傳所有成功建立的 ID 陣列
             return authors.Select(a => a.Id).ToList();
         }
+        public async Task<bool> UpdateAuthorAsync(int id, AuthorUpdateDto dto)
+        {
+            var author = await _context.Authors.FindAsync(id);
+            if (author == null)
+            {
+                return false;
+            }
+
+            author.Name = dto.Name;
+            author.Introduction = dto.Introduction;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> DeleteAuthorAsync(int id)
+        {
+            var hasbook = await _context.Books.AnyAsync(b=>b.AuthorId ==id);
+            if (hasbook)
+            { 
+                throw new InvalidOperationException("無法刪除作者：該作者旗下仍有綁定書籍資料。");
+            }
+            var effectRows = await _context.Authors.Where(a=>a.Id == id).ExecuteDeleteAsync();
+            return effectRows>0;
+        }
     }
 }

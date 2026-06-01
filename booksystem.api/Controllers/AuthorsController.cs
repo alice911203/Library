@@ -7,7 +7,7 @@ namespace booksystem.api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthorsController:ControllerBase
+    public class AuthorsController : ControllerBase
     {
         private readonly IAuthorService _authorService;
 
@@ -42,5 +42,27 @@ namespace booksystem.api.Controllers
             var ids = await _authorService.BatchCreateAuthorsAsync(dtos);
             return Ok(new { Message = $"成功新增 {ids.Count} 位作者", Ids = ids });
         }
-    }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAuthor(int id, [FromBody] AuthorUpdateDto dto)
+        {
+            var UpdateAuthor = await _authorService.UpdateAuthorAsync(id, dto);
+            if (UpdateAuthor == false) return NotFound("找不到要更新的作者");
+            return NoContent();
+
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAuthor(int id)
+        {
+            try
+            {
+                var DeleteAuthor = await _authorService.DeleteAuthorAsync(id);
+                if (!DeleteAuthor) return NotFound("找不到要刪除的作者");
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+    }   
 }
